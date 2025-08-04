@@ -1,0 +1,98 @@
+Service Interface and Implementation
+Interface:
+
+java
+public interface ExpenseService {
+    ExpenseResponseDTO createExpense(ExpenseRequestDTO dto);
+}
+This defines a contract for your service: any class implementing ExpenseService must provide a createExpense method that takes a request DTO and returns a response DTO. This promotes clean, modular code and makes testing/mocking easier.
+
+Implementation:
+
+java
+@Override
+public ExpenseResponseDTO createExpense(ExpenseRequestDTO dto) {
+    Expense expense = new Expense();
+    BeanUtils.copyProperties(dto, expense);
+    Expense saved = expenseRepository.save(expense);
+    return mapToDTO(saved);
+}
+Let’s step through what happens here:
+
+1. Creating the Entity
+java
+Expense expense = new Expense();
+An entity is created. This is typically a JPA/Hibernate object mapping to a database table.
+
+2. Copying Properties from DTO to Entity
+java
+BeanUtils.copyProperties(dto, expense);
+All matching fields from the Data Transfer Object (DTO) are copied into the entity object.
+
+DTOs are used for receiving/sending data without exposing entity details directly in your REST API.
+
+This method quickly moves data from the API object to the persistence object.
+
+3. Persisting to the Database
+java
+Expense saved = expenseRepository.save(expense);
+The entity is saved to the database using a Spring Data JPA repository. This handles the SQL behind the scenes.
+
+4. Mapping Entity Back to a DTO
+java
+return mapToDTO(saved);
+The saved entity (which might have new fields, like generated IDs) is converted back into a DTO, which is returned to the API caller.
+
+This ensures you have control over exactly what you expose in your API response.
+
+The Art of Writing APIs in Spring Boot
+Here are some key concepts and steps for creating APIs like this:
+
+1. Model-DTO Separation
+Model/Entity: Represents the database structure.
+
+DTO: Represents the REST API contract (what the frontend/app sends or receives).
+
+Keeps your API flexible—changing DB structure doesn't directly impact your clients.
+
+2. Service Layer
+Contains business logic and orchestrates calls between repositories and other components.
+
+Exposes only what is needed for controllers or other consumers.
+
+3. Repository Layer
+Handles database interactions. With Spring Data JPA, you usually just define an interface!
+
+4. Controller Layer (API Endpoints)
+Typically, you'd have:
+
+java
+@RestController
+@RequestMapping("/api/expenses")
+public class ExpenseController {
+    @Autowired
+    private ExpenseService expenseService;
+
+    @PostMapping
+    public ResponseEntity<ExpenseResponseDTO> create(@RequestBody ExpenseRequestDTO dto) {
+        return ResponseEntity.ok(expenseService.createExpense(dto));
+    }
+}
+This connects the API endpoint (/api/expenses) to your service method.
+
+Best Practices
+Validation: Use annotations like @Valid and @NotNull for incoming DTOs.
+
+Exception Handling: Write exception handlers to return meaningful error responses.
+
+Separation of Concerns: Keep controller, service, repository, and entity logic cleanly separated.
+
+Testing: Mock service/repo layers for unit testing.
+
+Summary Table
+Layer	-->Responsibility
+Controller--	Handles HTTP requests/responses.
+Service	--Contains business logic, coordinates operations.
+Repository--	Handles database access (CRUD operations).
+DTO	--Contract for API, shields entity details.
+Entity	--Maps to database tables for persistence.

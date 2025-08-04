@@ -33,22 +33,33 @@ public class ExpenseServiceImpl implements ExpenseService {
     public ExpenseResponseDTO createExpense(ExpenseRequestDTO dto) {
         Expense expense = new Expense();
         BeanUtils.copyProperties(dto, expense);
-        Expense saved = expenseRepository.save(expense);
-        return mapToDTO(saved);
+        Expense saved = expenseRepository.save(expense); //cmn
+        return mapToDTO(saved); //cmn
     }
 
     @Override
     public ExpenseResponseDTO getExpense(Long id) {
-        Expense expense = expenseRepository.findById(id)
+        Expense expense = expenseRepository.findById(id) //cmn
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-        return mapToDTO(expense);
+        return mapToDTO(expense);//cmn
     }
 
+
+    /* @Override
+    public Page<ExpenseResponseDTO> searchExpenses(String keyword, Pageable pageable) {
+        // Assuming you have a method in repository for keyword searching
+        Page<Expense> expenses = expenseRepository.findByKeyword(keyword, pageable);
+
+        // Mapping to DTO
+        return expenses.map(this::mapToDTO);
+    }*/
     @Override
     public Page<ExpenseResponseDTO> searchExpenses(String keyword, Pageable pageable) {
         return expenseRepository
                 .findAllByTitleContainingIgnoreCase(keyword, pageable)
                 .map(this::mapToDTO);
+
+//        :: is used to call a method by referring to it with the help of its class directly. For example, String::toLowerCase
     }
 
     @Override
